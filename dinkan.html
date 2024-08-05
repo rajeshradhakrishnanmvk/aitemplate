@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Copilot</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.8.1/font/bootstrap-icons.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            display: flex;
+            height: 100vh;
+        }
+        #sidebar {
+            background-color: #f8f9fa;
+            padding: 10px;
+            overflow-y: auto;
+        }
+        #chat {
+            display: flex;
+            flex-direction: column;
+        }
+        #chat-messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        #chat-input {
+            padding: 10px;
+            border-top: 1px solid #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+          <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #800080;">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">Groqlet Copilot</a>
+                <div class="d-flex align-items-center">
+                  <a class="nav-link text-white" href="#" style="margin-right: 10px;">
+                      <i class="bi bi-plug"></i> Plugins
+                  </a>
+                  <img src="user-icon-url" alt="User Icon" class="rounded-circle" style="width: 30px; height: 30px;">
+              </div>
+            </div>
+        </nav>
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-12 col-md-3" id="sidebar">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h4>Chat</h4>
+                    <button class="btn btn-primary btn-sm" id="addChatBtn">+</button>
+                </div>
+                <ul class="list-group" id="chatList">
+                    <li class="list-group-item">
+                        <div class="d-flex justify-content-between">
+                            <span>Can you tell me a story?</span>
+                            <small>11:10 PM</small>
+                        </div>
+                    </li>
+
+                </ul>
+            </div>
+            <!-- Chat -->
+            <div class="col-12 col-md-9 d-flex flex-column" id="chat">
+              <ul class="nav nav-tabs">
+                  <li class="nav-item">
+                      <a class="nav-link active" data-bs-toggle="tab" href="#chatTab">Chat</a>
+                  </li>
+                  <li class="nav-item">
+                      <a class="nav-link" data-bs-toggle="tab" href="#documentsTab">Documents</a>
+                  </li>
+                  <li class="nav-item">
+                      <a class="nav-link" data-bs-toggle="tab" href="#plansTab">Plans</a>
+                  </li>
+                  <li class="nav-item">
+                      <a class="nav-link" data-bs-toggle="tab" href="#personasTab">Personas</a>
+                  </li>
+              </ul>
+              <div class="tab-content flex-grow-1">
+                  <div class="tab-pane fade show active" id="chatTab">
+                      <div id="chat-messages">
+                          <div class="chat-message">
+                              <strong>Copilot</strong>
+                              <p>Hello, thank you for democratizing AI's productivity benefits with open source! How can I help you today?</p>
+                          </div>
+                          <div class="chat-message">
+                              <strong>MB</strong>
+                              <p>Can you tell me a story about a prince in a paragraph?</p>
+                          </div>
+                      </div>
+                      <div id="chat-input" class="d-flex">
+                          <input type="text" class="form-control me-2" placeholder="Type a message...">
+                          <button class="btn btn-primary">Send</button>
+                      </div>
+                  </div>
+                  <div class="tab-pane fade" id="documentsTab">
+                      <!-- Content for Documents tab -->
+                  </div>
+                  <div class="tab-pane fade" id="plansTab">
+                      <!-- Content for Plans tab -->
+                  </div>
+                  <div class="tab-pane fade" id="personasTab">
+                      <!-- Content for Personas tab -->
+                  </div>
+              </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+    <script>
+      document.getElementById('addChatBtn').addEventListener('click', function() {
+          var chatList = document.getElementById('chatList');
+          var newItem = document.createElement('li');
+          newItem.className = 'list-group-item';
+          newItem.textContent = 'New Copilot Item';
+          chatList.appendChild(newItem);
+      });
+  </script>
+</body>
+</html>
