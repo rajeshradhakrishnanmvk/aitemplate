@@ -31,14 +31,14 @@ def ChatInput():
 # The main screen
 @app.route("/")
 def get():
-    page = Body(H1('Chatbot Demo'),
+    page = Body(H1('Agentic Bot 1001'),
                 Div(*[ChatMessage(msg) for msg in messages],
                     id="chatlist", cls="chat-box h-[73vh] overflow-y-auto"),
                 Form(Group(ChatInput(), Button("Send", cls="btn btn-primary")),
                     hx_post="/", hx_target="#chatlist", hx_swap="beforeend",
                     cls="flex space-x-2 mt-2",
                 ), cls="p-4 max-w-lg mx-auto")
-    return Title('Chatbot Demo'), page
+    return Title('Agentic Bot 1001'), page
 
 # Handle the form submission
 @app.post("/")
