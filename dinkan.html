@@ -90,6 +90,10 @@
 
                 </ul>
             </div>
+            <!-- Context menu for renaming chat items -->
+            <div id="contextMenu" class="dropdown-menu" style="display:none; position:absolute;">
+                <a class="dropdown-item" href="#" id="renameItem">Rename</a>
+            </div>
             <!-- Chat -->
             <div class="col-12 col-md-9 d-flex flex-column" id="chat">
               <ul class="nav nav-tabs">
@@ -223,13 +227,52 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
     <script>
-      document.getElementById('addChatBtn').addEventListener('click', function() {
-          var chatList = document.getElementById('chatList');
-          var newItem = document.createElement('li');
-          newItem.className = 'list-group-item';
-          newItem.textContent = 'New Copilot Item';
-          chatList.appendChild(newItem);
-      });
+        let agents = [
+                        {
+                            "Persona": {
+                                "agentname": "dinkan-1",
+                                "metaprompt": "you are a helpful assistant",
+                                "prefill": "helps me with financial Reconciliation",
+                                "tooluse": "true",
+                                "filesearch": "true",
+                                "codeinterpreter": "true"
+                            },
+                            "Plans": [
+                                { "name": "askquestion", "createon": "06/8/2024", "tokencount": "2048" }
+                            ],
+                            "Documents": [
+                                { "file": "./reconciliation.txt", "createon": "06/8/2024", "size": "30,079", "Access": "private", "progress": "success" },
+                                { "file": "./design.pdf", "createon": "07/8/2024", "size": "30,079", "Access": "public", "progress": "error" }
+                            ],
+                            "Chat": [
+                                { "role": "assistant", "content": "what is the capital of India" },
+                                { "role": "user", "content": "New Delhi is the capital of India" }
+                            ]
+                        },
+                        {
+                            "Persona": {
+                                "agentname": "dinkan-2",
+                                "metaprompt": "you are a helpful assistant",
+                                "prefill": "helps me with financial Reconciliation",
+                                "tooluse": "true",
+                                "filesearch": "false",
+                                "codeinterpreter": "false"
+                            },
+                            "Plans": [
+                                { "name": "askquestion", "createon": "06/8/2024", "tokencount": "2048" }
+                            ],
+                            "Documents": [
+                                { "file": "./design.txt", "createon": "08/8/2024", "size": "30,079", "Access": "private", "progress": "success" },
+                                { "file": "./design.pdf", "createon": "09/8/2024", "size": "30,079", "Access": "public", "progress": "error" }
+                            ],
+                            "Chat": [
+                                { "role": "assistant", "content": "what is the capital of Kerala" },
+                                { "role": "user", "content": "Trivandrum is the capital of India" }
+                            ]
+                        }
+                    ];
+
+
         // Initial messages
         let messages = [{"role": "Copilot", "content":"Hello, thank you for democratizing AI's productivity benefits with open source! How can I help you today?"}];
 
@@ -314,6 +357,69 @@
     });
         // Display initial messages
         displayMessages();
+
+        document.getElementById('addChatBtn').addEventListener('click', function() {
+        var chatList = document.getElementById('chatList');
+        var newItem = document.createElement('li');
+        newItem.className = 'list-group-item';
+        newItem.innerHTML = `<div class="d-flex justify-content-between">
+                                <span>New Agent</span>
+                                <small>${new Date().toLocaleTimeString()}</small>
+                            </div>`;
+        newItem.setAttribute('data-messages', JSON.stringify([]));
+        chatList.appendChild(newItem);
+
+        // Add new agent to agents array
+        var newAgent = {
+            "Persona": {
+                "agentname": `agent-${Date.now()}`,
+                "metaprompt": "you are a helpful assistant",
+                "prefill": "helps me with financial Reconciliation",
+                "tooluse": "true",
+                "filesearch": "false",
+                "codeinterpreter": "false"
+            },
+            "Plans": [],
+            "Documents": [],
+            "Chat": []
+        };
+        agents.push(newAgent);
+
+        // Add event listener to the new item for renaming
+        newItem.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            showContextMenu(e, newItem);
+        });
+    });
+
+    // Show context menu
+    function showContextMenu(event, listItem) {
+        var contextMenu = document.getElementById('contextMenu');
+        contextMenu.style.display = 'block';
+        contextMenu.style.left = event.pageX + 'px';
+        contextMenu.style.top = event.pageY + 'px';
+
+        document.getElementById('renameItem').onclick = function() {
+            var newName = prompt("Enter new name:", listItem.querySelector('span').textContent);
+            if (newName) {
+                listItem.querySelector('span').textContent = newName;
+            }
+            contextMenu.style.display = 'none';
+        };
+
+        document.addEventListener('click', function() {
+            contextMenu.style.display = 'none';
+        }, { once: true });
+    }
+
+    // Event listener for existing items
+    document.querySelectorAll('#chatList .list-group-item').forEach(item => {
+        item.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            showContextMenu(e, item);
+        });
+    });
+
   </script>
 </body>
 </html>
