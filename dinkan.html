@@ -64,7 +64,7 @@
     <div class="container-fluid">
           <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #800080;">
             <div class="container-fluid">
-                <a class="navbar-brand" href="#">Groqlet Copilot</a>
+                <a class="navbar-brand" href="#">Groqlet Expendables</a>
                 <div class="d-flex align-items-center">
                   <a class="nav-link text-white" href="#" style="margin-right: 10px;">
                       <i class="bi bi-plug"></i> Plugins
@@ -81,12 +81,13 @@
                     <button class="btn btn-primary btn-sm" id="addChatBtn">+</button>
                 </div>
                 <ul class="list-group" id="chatList">
-                    <li class="list-group-item">
+                    <!-- Dynamically populated agents list of chat items -->
+                    <!-- <li class="list-group-item">
                         <div class="d-flex justify-content-between">
                             <span>Can you tell me a story?</span>
                             <small>11:10 PM</small>
                         </div>
-                    </li>
+                    </li> -->
 
                 </ul>
             </div>
@@ -148,8 +149,8 @@
                             <label class="form-check-label" for="qdrant">Qdrant</label>
                         </div>
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" name="vectorDatabase" id="azureAISearch" value="azureAISearch">
-                            <label class="form-check-label" for="azureAISearch">AzureAISearch</label>
+                            <input class="form-check-input" type="radio" name="vectorDatabase" id="llamaindexSearch" value="llamaindexSearch">
+                            <label class="form-check-label" for="llamaindexSearch">llamaindex Search</label>
                         </div>
                     </div>
                     <table class="table">
@@ -205,8 +206,8 @@
                             <textarea class="form-control" id="metaPromptInput" rows="3" placeholder="Enter your Meta Prompt..."></textarea>
                         </div>
                         <div class="mb-3">
-                            <label for="shortTermMemoryInput" class="form-label">Short Term Memory</label>
-                            <textarea class="form-control" id="shortTermMemoryInput" rows="3" placeholder="Enter agent's Short Term Memory..."></textarea>
+                            <label for="prefillInput" class="form-label">Prefill</label>
+                            <textarea class="form-control" id="prefillInput" rows="3" placeholder="Enter agent's prefill..."></textarea>
                         </div>
                         <div class="d-flex justify-content-end">
                             <button class="btn btn-primary" id="savePlanBtn">Save</button>
@@ -245,6 +246,7 @@
                                 { "file": "./design.pdf", "createon": "07/8/2024", "size": "30,079", "Access": "public", "progress": "error" }
                             ],
                             "Chat": [
+                                {"role": "system", "content":"Hello, thank you for democratizing AI's productivity benefits with open source! How can I help you today?"},
                                 { "role": "assistant", "content": "what is the capital of India" },
                                 { "role": "user", "content": "New Delhi is the capital of India" }
                             ]
@@ -259,105 +261,92 @@
                                 "codeinterpreter": "false"
                             },
                             "Plans": [
-                                { "name": "askquestion", "createon": "06/8/2024", "tokencount": "2048" }
+                                { "name": "calculate", "createon": "07/8/2024", "tokencount": "1024" }
                             ],
                             "Documents": [
                                 { "file": "./design.txt", "createon": "08/8/2024", "size": "30,079", "Access": "private", "progress": "success" },
                                 { "file": "./design.pdf", "createon": "09/8/2024", "size": "30,079", "Access": "public", "progress": "error" }
                             ],
                             "Chat": [
+                                {"role": "system", "content":"Hello, thank you for democratizing AI's productivity benefits with open source! How can I help you today?"},
                                 { "role": "assistant", "content": "what is the capital of Kerala" },
                                 { "role": "user", "content": "Trivandrum is the capital of India" }
                             ]
                         }
                     ];
+        
+        let selectedAgentIndex = -1;
+        
+        function populateTabs() {
+            if (selectedAgentIndex >= 0) {
+                const selectedAgent = agents[selectedAgentIndex];
 
+                // Populate Personas tab
+                const agentNameInput = document.getElementById('agentNameInput');
+                const metaPromptInput = document.getElementById('metaPromptInput');
+                const prefillInput = document.getElementById('prefillInput');
 
-        // Initial messages
-        let messages = [{"role": "Copilot", "content":"Hello, thank you for democratizing AI's productivity benefits with open source! How can I help you today?"}];
+                agentNameInput.value = agents[selectedAgentIndex].Persona.agentname;
+                metaPromptInput.value = agents[selectedAgentIndex].Persona.metaprompt;
+                prefillInput.value = agents[selectedAgentIndex].Persona.prefill;
 
-        // Function to display messages
-        function displayMessages() {
-            const chatMessages = document.getElementById('chat-messages');
-            chatMessages.innerHTML = '';
-            messages.forEach(msg => {
-                const messageElement = document.createElement('div');
-                messageElement.classList.add('chat-message');
-                messageElement.innerHTML = `<strong>${msg.role}</strong><p>${msg.content}</p>`;
-                chatMessages.appendChild(messageElement);
-            });
+                // Populate Plans tab
+                // Clear and repopulate the plans table or list with selectedAgent.Plans
+                const planTable = document.getElementById('planTable');
+                planTable.innerHTML = '';
+                agents[selectedAgentIndex].Plans.forEach(plan => {
+                    const newRow = `<tr>
+                        <td>${plan.name}</td>
+                        <td>${plan.createon}</td>
+                        <td>${plan.tokencount}</td>
+                    </tr>`;
+                    planTable.insertAdjacentHTML('beforeend', newRow);
+                });
+                // Populate Documents tab
+                // Clear and repopulate the documents table with selectedAgent.Documents
+                const fileTable = document.getElementById('fileTable');
+                fileTable.innerHTML = '';
+                agents[selectedAgentIndex].Documents.forEach(doc => {
+                    const newRow = `<tr>
+                        <td><i class="bi bi-file-earmark-text file-icon"></i> ${doc.file}</td>
+                        <td>${doc.createon}</td>
+                        <td>${doc.size}</td>
+                        <td>${doc.Access}</td>
+                        <td><div class="progress"><div class="progress-bar"></div></div></td>
+                    </tr>`;
+                    fileTable.insertAdjacentHTML('beforeend', newRow);
+                });
+                // Display initial messages
+                //displayMessages();
+            }
         }
 
-        // Event listener for sidebar items
-        document.querySelectorAll('#chatList .list-group-item').forEach(item => {
-            item.addEventListener('click', function() {
-                const newMessages = JSON.parse(this.getAttribute('data-messages'));
-                messages = [...newMessages];
-                displayMessages();
+        function renderChatList() {
+            const chatList = document.getElementById('chatList');
+            chatList.innerHTML = ''; // Clear the existing list
+
+            agents.forEach((agent, index) => {
+                const newItem = document.createElement('li');
+                newItem.className = 'list-group-item';
+                newItem.innerHTML = `<div class="d-flex justify-content-between">
+                                        <span>${agent.Persona.agentname}</span>
+                                        <small>${new Date().toLocaleTimeString()}</small>
+                                    </div>`;
+                newItem.setAttribute('data-index', index);
+                newItem.setAttribute('data-messages', JSON.stringify(agent.Chat));
+                newItem.addEventListener('click', function() {
+                    selectedAgentIndex = parseInt(this.getAttribute('data-index'));
+                    displayMessages();
+                    populateTabs();
+                });
+                newItem.addEventListener('contextmenu', function(e) {
+                    e.preventDefault();
+                    showContextMenu(e, newItem, index);
+                });
+                chatList.appendChild(newItem);
             });
-        });
-
-        // Event listener for send button
-        document.getElementById('sendBtn').addEventListener('click', function() {
-            const input = document.getElementById('messageInput');
-            const userMessage = input.value;
-            if (userMessage) {
-                messages.push({ role: 'MB', content: userMessage });
-                if (userMessage.toLowerCase() === 'what is the capital of india') {
-                    messages.push({ role: 'Copilot', content: 'New Delhi is the capital of India' });
-                }
-                displayMessages();
-                input.value = '';
-            }
-        });
-        // Event listener for upload button
-        document.getElementById('uploadBtn').addEventListener('click', function() {
-            document.getElementById('fileInput').click();
-        });
-
-        // Event listener for file input
-        document.getElementById('fileInput').addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const newRow = `<tr>
-                    <td><i class="bi bi-file-earmark-text file-icon"></i> ${file.name}</td>
-                    <td>${new Date().toLocaleTimeString()}</td>
-                    <td>${file.size}</td>
-                    <td>This chat</td>
-                    <td><div class="progress"><div class="progress-bar"></div></div></td>
-                </tr>`;
-                document.getElementById('fileTable').insertAdjacentHTML('beforeend', newRow);
-            }
-        });
-        document.getElementById('savePlanBtn').addEventListener('click', function() {
-        const agentname = document.getElementById('agentNameInput').value;
-        const metaprompt = document.getElementById('metaPromptInput').value;
-        const shorttermMemory = document.getElementById('shortTermMemoryInput').value;
-
-        const plan = {
-            agentname,
-            metaprompt,
-            shorttermMemory
-        };
-
-        const savedPlansList = document.getElementById('savedPlansList');
-        const planItem = document.createElement('li');
-        planItem.classList.add('list-group-item');
-        planItem.textContent = `Agent Name: ${agentname}`;
-        planItem.addEventListener('click', function() {
-            alert(`Resources: ${plan.metaprompt}\nTimeline: ${plan.shorttermMemory}`);
-        });
-
-        savedPlansList.appendChild(planItem);
-
-        // Clear the inputs after saving
-        document.getElementById('agentNameInput').value = '';
-        document.getElementById('metaPromptInput').value = '';
-        document.getElementById('shortTermMemoryInput').value = '';
-    });
-        // Display initial messages
-        displayMessages();
-
+        }
+        // Event listener for add chat button - Sidebar
         document.getElementById('addChatBtn').addEventListener('click', function() {
         var chatList = document.getElementById('chatList');
         var newItem = document.createElement('li');
@@ -384,41 +373,130 @@
             "Chat": []
         };
         agents.push(newAgent);
-
-        // Add event listener to the new item for renaming
-        newItem.addEventListener('contextmenu', function(e) {
-            e.preventDefault();
-            showContextMenu(e, newItem);
-        });
+        renderChatList();
     });
 
-    // Show context menu
-    function showContextMenu(event, listItem) {
-        var contextMenu = document.getElementById('contextMenu');
-        contextMenu.style.display = 'block';
-        contextMenu.style.left = event.pageX + 'px';
-        contextMenu.style.top = event.pageY + 'px';
+        // Show context menu
+        function showContextMenu(event, listItem) {
+            var contextMenu = document.getElementById('contextMenu');
+            contextMenu.style.display = 'block';
+            contextMenu.style.left = event.pageX + 'px';
+            contextMenu.style.top = event.pageY + 'px';
 
-        document.getElementById('renameItem').onclick = function() {
-            var newName = prompt("Enter new name:", listItem.querySelector('span').textContent);
-            if (newName) {
-                listItem.querySelector('span').textContent = newName;
+            document.getElementById('renameItem').onclick = function() {
+                var newName = prompt("Enter new name:", listItem.querySelector('span').textContent);
+                if (newName) {
+                    listItem.querySelector('span').textContent = newName;
+                    //write a code to update the agent name in agents array
+                    agents[selectedAgentIndex].Persona.agentname = newName;
+                }
+                contextMenu.style.display = 'none';
+            };
+
+            document.addEventListener('click', function() {
+                contextMenu.style.display = 'none';
+            }, { once: true });
+        }
+
+        // Event listener for existing items
+        document.querySelectorAll('#chatList .list-group-item').forEach(item => {
+            item.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                showContextMenu(e, item);
+            });
+        });
+        // Function to display messages
+        function displayMessages() {
+            const chatMessages = document.getElementById('chat-messages');
+            chatMessages.innerHTML = '';
+            agents[selectedAgentIndex].Chat.forEach(msg => {
+                const messageElement = document.createElement('div');
+                messageElement.classList.add('chat-message');
+                messageElement.innerHTML = `<strong>${msg.role}</strong><p>${msg.content}</p>`;
+                chatMessages.appendChild(messageElement);
+            });
+        }
+
+        // Event listener for sidebar items
+        document.querySelectorAll('#chatList .list-group-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const newMessages = JSON.parse(this.getAttribute('data-messages'));
+                messages = [...newMessages];
+                displayMessages();
+            });
+        });
+
+        // Event listener for send button
+        document.getElementById('sendBtn').addEventListener('click', function() {
+            const input = document.getElementById('messageInput');
+            const userMessage = input.value;
+            if (userMessage) {
+                agents[selectedAgentIndex].Chat.push({ role: 'MB', content: userMessage });
+                if (userMessage.toLowerCase() === 'what is the capital of india') {
+                    agents[0].Chat.push({ role: 'Copilot', content: 'New Delhi is the capital of India' });
+                }
+                displayMessages();
+                input.value = '';
             }
-            contextMenu.style.display = 'none';
-        };
-
-        document.addEventListener('click', function() {
-            contextMenu.style.display = 'none';
-        }, { once: true });
-    }
-
-    // Event listener for existing items
-    document.querySelectorAll('#chatList .list-group-item').forEach(item => {
-        item.addEventListener('contextmenu', function(e) {
-            e.preventDefault();
-            showContextMenu(e, item);
         });
-    });
+
+        // Event listener for upload button
+        document.getElementById('uploadBtn').addEventListener('click', function() {
+            document.getElementById('fileInput').click();
+        });
+
+        // Event listener for file input - Documents Tab
+        document.getElementById('fileInput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const newRow = `<tr>
+                    <td><i class="bi bi-file-earmark-text file-icon"></i> ${file.name}</td>
+                    <td>${new Date().toLocaleTimeString()}</td>
+                    <td>${file.size}</td>
+                    <td>This chat</td>
+                    <td><div class="progress"><div class="progress-bar"></div></div></td>
+                </tr>`;
+                document.getElementById('fileTable').insertAdjacentHTML('beforeend', newRow);
+            }
+        });
+
+        // Event listener for save button - Personas Tab
+        document.getElementById('savePlanBtn').addEventListener('click', function() {
+            const agentname = document.getElementById('agentNameInput').value;
+            const metaprompt = document.getElementById('metaPromptInput').value;
+            const prefill = document.getElementById('prefillInput').value;
+
+            const plan = {
+                agentname,
+                metaprompt,
+                prefill
+            };
+
+            const savedPlansList = document.getElementById('savedPlansList');
+            const planItem = document.createElement('li');
+            planItem.classList.add('list-group-item');
+            planItem.textContent = `Agent Name: ${agentname}`;
+            planItem.addEventListener('click', function() {
+                alert(`Meta Prompt: ${plan.metaprompt}\nPrefill: ${plan.prefill}`);
+            });
+
+            savedPlansList.appendChild(planItem);
+
+            // Clear the inputs after saving
+            document.getElementById('agentNameInput').value = '';
+            document.getElementById('metaPromptInput').value = '';
+            document.getElementById('prefillInput').value = '';
+        });
+
+
+
+    // Initial rendering of the chat list
+    renderChatList();
+
+    // Populate tabs initially (if needed)
+    populateTabs();
+
+
 
   </script>
 </body>
