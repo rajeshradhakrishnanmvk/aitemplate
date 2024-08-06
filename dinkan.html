@@ -8,27 +8,55 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.8.1/font/bootstrap-icons.min.css" rel="stylesheet">
 
     <style>
-        body {
-            display: flex;
-            height: 100vh;
+      body {
+          display: flex;
+          height: 100vh;
+          overflow: hidden;
+      }
+      #sidebar {
+          background-color: #f8f9fa;
+          padding: 10px;
+          overflow-y: auto;
+          height: 100vh;
+      }
+      #chat {
+          display: flex;
+          flex-direction: column;
+          height: 100vh;
+          overflow-y: hidden;
+      }
+      #chat-messages {
+          flex-grow: 1;
+          overflow-y: auto;
+          padding: 10px;
+      }
+      #chat-input {
+          padding: 10px;
+          border-top: 1px solid #e9ecef;
+      }
+      #documentsTab {
+            padding: 20px;
         }
-        #sidebar {
-            background-color: #f8f9fa;
-            padding: 10px;
-            overflow-y: auto;
+        .file-upload {
+            display: none;
         }
-        #chat {
-            display: flex;
-            flex-direction: column;
+        .file-icon {
+            width: 20px;
+            height: 20px;
         }
-        #chat-messages {
-            flex-grow: 1;
-            overflow-y: auto;
-            padding: 10px;
+        .progress-bar {
+            width: 100%;
+            height: 100%;
+            background-color: #4caf50;
         }
-        #chat-input {
-            padding: 10px;
-            border-top: 1px solid #e9ecef;
+        .container-fluid {
+        overflow-y: auto;
+        }
+        .form-label {
+            font-weight: bold;
+        }
+        .list-group-item {
+            cursor: pointer;
         }
     </style>
 </head>
@@ -91,18 +119,100 @@
                           </div>
                       </div>
                       <div id="chat-input" class="d-flex">
-                          <input type="text" class="form-control me-2" placeholder="Type a message...">
-                          <button class="btn btn-primary">Send</button>
+                          <input type="text" class="form-control me-2" placeholder="Type a message..." id="messageInput">
+                          <button class="btn btn-primary" id="sendBtn">Send</button>
                       </div>
                   </div>
                   <div class="tab-pane fade" id="documentsTab">
                       <!-- Content for Documents tab -->
+                      <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h4>Documents</h4>
+                        <button class="btn btn-primary btn-sm" id="uploadBtn">Upload</button>
+                        <input type="file" id="fileInput" class="file-upload">
+                    </div>
+                    <div class="d-flex mb-2">
+                        <div class="form-check me-3">
+                            <input class="form-check-input" type="radio" name="vectorDatabase" id="volatile" value="volatile">
+                            <label class="form-check-label" for="volatile">Volatile</label>
+                        </div>
+                        <div class="form-check me-3">
+                            <input class="form-check-input" type="radio" name="vectorDatabase" id="textFile" value="textFile" checked>
+                            <label class="form-check-label" for="textFile">TextFile</label>
+                        </div>
+                        <div class="form-check me-3">
+                            <input class="form-check-input" type="radio" name="vectorDatabase" id="qdrant" value="qdrant">
+                            <label class="form-check-label" for="qdrant">Qdrant</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="vectorDatabase" id="azureAISearch" value="azureAISearch">
+                            <label class="form-check-label" for="azureAISearch">AzureAISearch</label>
+                        </div>
+                    </div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Created on</th>
+                                <th>Size (bytes)</th>
+                                <th>Access</th>
+                                <th>Progress</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fileTable">
+                            <tr>
+                                <td><i class="bi bi-file-earmark-text file-icon"></i> reconciliation.txt</td>
+                                <td>9:38 am</td>
+                                <td>30,079</td>
+                                <td>This chat</td>
+                                <td><div class="progress"><div class="progress-bar"></div></div></td>
+                            </tr>
+                        </tbody>
+                    </table>
                   </div>
                   <div class="tab-pane fade" id="plansTab">
                       <!-- Content for Plans tab -->
+                      <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Goal</th>
+                                <th>Created on</th>
+                                <th>Token Count</th>
+                            </tr>
+                        </thead>
+                        <tbody id="planTable">
+                            <tr>
+                                <td>askQuestions</td>
+                                <td>9:38 am</td>
+                                <td>30,079</td>
+                            </tr>
+                        </tbody>
+                    </table>
                   </div>
                   <div class="tab-pane fade" id="personasTab">
                       <!-- Content for Personas tab -->
+                      <div class="container-fluid p-3">
+                        <h4>Persona</h4>
+                        <div class="mb-3">
+                            <label for="agentNameInput" class="form-label">Agent Name</label>
+                            <input type="text" class="form-control" id="agentNameInput" placeholder="Enter your agent's name...">
+                        </div>
+                        <div class="mb-3">
+                            <label for="metaPromptInput" class="form-label">Meta Prompt</label>
+                            <textarea class="form-control" id="metaPromptInput" rows="3" placeholder="Enter your Meta Prompt..."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="shortTermMemoryInput" class="form-label">Short Term Memory</label>
+                            <textarea class="form-control" id="shortTermMemoryInput" rows="3" placeholder="Enter agent's Short Term Memory..."></textarea>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <button class="btn btn-primary" id="savePlanBtn">Save</button>
+                        </div>
+                        <hr>
+                        <h5>Saved Plans</h5>
+                        <ul class="list-group" id="savedPlansList">
+                            <!-- Dynamically populated list of saved plans -->
+                        </ul>
+                    </div>
                   </div>
               </div>
             </div>
@@ -120,6 +230,90 @@
           newItem.textContent = 'New Copilot Item';
           chatList.appendChild(newItem);
       });
+        // Initial messages
+        let messages = [{"role": "Copilot", "content":"Hello, thank you for democratizing AI's productivity benefits with open source! How can I help you today?"}];
+
+        // Function to display messages
+        function displayMessages() {
+            const chatMessages = document.getElementById('chat-messages');
+            chatMessages.innerHTML = '';
+            messages.forEach(msg => {
+                const messageElement = document.createElement('div');
+                messageElement.classList.add('chat-message');
+                messageElement.innerHTML = `<strong>${msg.role}</strong><p>${msg.content}</p>`;
+                chatMessages.appendChild(messageElement);
+            });
+        }
+
+        // Event listener for sidebar items
+        document.querySelectorAll('#chatList .list-group-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const newMessages = JSON.parse(this.getAttribute('data-messages'));
+                messages = [...newMessages];
+                displayMessages();
+            });
+        });
+
+        // Event listener for send button
+        document.getElementById('sendBtn').addEventListener('click', function() {
+            const input = document.getElementById('messageInput');
+            const userMessage = input.value;
+            if (userMessage) {
+                messages.push({ role: 'MB', content: userMessage });
+                if (userMessage.toLowerCase() === 'what is the capital of india') {
+                    messages.push({ role: 'Copilot', content: 'New Delhi is the capital of India' });
+                }
+                displayMessages();
+                input.value = '';
+            }
+        });
+        // Event listener for upload button
+        document.getElementById('uploadBtn').addEventListener('click', function() {
+            document.getElementById('fileInput').click();
+        });
+
+        // Event listener for file input
+        document.getElementById('fileInput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const newRow = `<tr>
+                    <td><i class="bi bi-file-earmark-text file-icon"></i> ${file.name}</td>
+                    <td>${new Date().toLocaleTimeString()}</td>
+                    <td>${file.size}</td>
+                    <td>This chat</td>
+                    <td><div class="progress"><div class="progress-bar"></div></div></td>
+                </tr>`;
+                document.getElementById('fileTable').insertAdjacentHTML('beforeend', newRow);
+            }
+        });
+        document.getElementById('savePlanBtn').addEventListener('click', function() {
+        const agentname = document.getElementById('agentNameInput').value;
+        const metaprompt = document.getElementById('metaPromptInput').value;
+        const shorttermMemory = document.getElementById('shortTermMemoryInput').value;
+
+        const plan = {
+            agentname,
+            metaprompt,
+            shorttermMemory
+        };
+
+        const savedPlansList = document.getElementById('savedPlansList');
+        const planItem = document.createElement('li');
+        planItem.classList.add('list-group-item');
+        planItem.textContent = `Agent Name: ${agentname}`;
+        planItem.addEventListener('click', function() {
+            alert(`Resources: ${plan.metaprompt}\nTimeline: ${plan.shorttermMemory}`);
+        });
+
+        savedPlansList.appendChild(planItem);
+
+        // Clear the inputs after saving
+        document.getElementById('agentNameInput').value = '';
+        document.getElementById('metaPromptInput').value = '';
+        document.getElementById('shortTermMemoryInput').value = '';
+    });
+        // Display initial messages
+        displayMessages();
   </script>
 </body>
 </html>
