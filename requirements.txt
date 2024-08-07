@@ -1,4 +1,7 @@
 python-fasthtml
+fasthtml-hf
 uvicorn>=0.29
 groq
 python-dotenv
+wikipedia
+duckduckgo_search

@@ -1,8 +1,13 @@
 import json
+from groq import Groq
 from fasthtml.common import * 
+from dotenv import load_dotenv, find_dotenv
+
 
 bootstraplink = Link(rel="stylesheet", href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css", integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC", crossorigin="anonymous")
 fontlink = Link(rel="stylesheet", href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.8.1/font/bootstrap-icons.min.css")
+favicon = Link(rel="icon", type="image/x-icon", href="https://raw.githubusercontent.com/rajeshradhakrishnanmvk/aitemplate/main/favicon.ico")
+
 title = Title("Groqlet Expendables")
 css = Style("""body {
     display: flex;
@@ -15,20 +20,71 @@ css = Style("""body {
     overflow-y: auto;
     height: 100vh;
 }
-#chat {
+.chat-wrapper {
+    height: 100%;
     display: flex;
     flex-direction: column;
-    height: 100vh;
-    overflow-y: hidden;
+    justify-content: center;
+    align-items: center;
 }
-#chat-messages {
-    flex-grow: 1;
+.chat-container {
+    width: 100%;
+    height: calc(100vh - 150px); /* Adjust based on other elements like header/footer */
     overflow-y: auto;
+    border: 1px solid #ddd;
     padding: 10px;
+    margin-bottom: 15px;
+    background-color: #f8f9fa; /* Optional for better visibility */
 }
-#chat-input {
+.chat-message {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.chat-message img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    
+}
+.chat-message.user {
+    flex-direction: row;
+}
+.chat-message.assistant {
+    flex-direction: row-reverse;
+}
+.bubble {
+    position: relative;
     padding: 10px;
-    border-top: 1px solid #e9ecef;
+    border-radius: 10px;
+    color: white;
+}
+.bubble::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-style: solid;
+}
+.chat-message.user .bubble {
+    background-color: #007bff;
+    margin-left: 10px;
+}
+.chat-message.user .bubble::after {
+    border-width: 10px 10px 10px 0;
+    border-color: transparent #007bff transparent transparent;
+    left: -10px;
+    top: 10px;
+}
+.chat-message.assistant .bubble {
+    background-color: #28a745;
+    margin-right: 10px;
+}
+.chat-message.assistant .bubble::after {
+    border-width: 10px 0 10px 10px;
+    border-color: transparent transparent transparent #28a745;
+    right: -10px;
+    top: 10px;
 }
 #documentsTab {
       padding: 20px;
@@ -54,60 +110,57 @@ css = Style("""body {
   .list-group-item {
       cursor: pointer;
   }""")
+load_dotenv(find_dotenv()) #os.environ["GROQ_API_KEY"]
+client = Groq()
 
-app = FastHTML(hdrs=(title,bootstraplink, fontlink,css))
+app = FastHTML(hdrs=(title,favicon,bootstraplink, fontlink,css))
+sp = """You are a helpful and concise assistant."""
+messages = []
+messages.append({"role":"system", "content":sp})
+persona = []
+documents =[]
+tools = []
 
-data = json.dumps([
-                        {
-                            "Persona": {
-                                "agentname": "dinkan-1",
-                                "metaprompt": "you are a helpful assistant",
-                                "prefill": "helps me with financial Reconciliation",
-                                "tooluse": "true",
-                                "filesearch": "true",
-                                "codeinterpreter": "true"
-                            },
-                            "Plans": [
-                                { "name": "askquestion", "createon": "06/8/2024", "tokencount": "2048" }
-                            ],
-                            "Documents": [
-                                { "file": "./reconciliation.txt", "createon": "06/8/2024", "size": "30,079", "Access": "private", "progress": "success" },
-                                { "file": "./design.pdf", "createon": "07/8/2024", "size": "30,079", "Access": "public", "progress": "error" }
-                            ],
-                            "Chat": [
-                                {"role": "system", "content":"Hello, thank you for democratizing AI's productivity benefits with open source! How can I help you today?"},
-                                { "role": "assistant", "content": "what is the capital of India" },
-                                { "role": "user", "content": "New Delhi is the capital of India" }
-                            ]
-                        },
-                        {
-                            "Persona": {
-                                "agentname": "dinkan-2",
-                                "metaprompt": "you are a helpful assistant",
-                                "prefill": "helps me with financial Reconciliation",
-                                "tooluse": "true",
-                                "filesearch": "false",
-                                "codeinterpreter": "false"
-                            },
-                            "Plans": [
-                                { "name": "calculate", "createon": "07/8/2024", "tokencount": "1024" }
-                            ],
-                            "Documents": [
-                                { "file": "./design.txt", "createon": "08/8/2024", "size": "30,079", "Access": "private", "progress": "success" },
-                                { "file": "./design.pdf", "createon": "09/8/2024", "size": "30,079", "Access": "public", "progress": "error" }
-                            ],
-                            "Chat": [
-                                {"role": "system", "content":"Hello, thank you for democratizing AI's productivity benefits with open source! How can I help you today?"},
-                                { "role": "assistant", "content": "what is the capital of Kerala" },
-                                { "role": "user", "content": "Trivandrum is the capital of India" }
-                            ]
-                        }
-                    ])
+# Chat message component, polling if message is still being generated
+def ChatMessage(msg_idx):
+    msg = messages[msg_idx]
 
+    text = "..." if msg['content'] == "" else msg['content']
+    generating = 'generating' in messages[msg_idx] and messages[msg_idx]['generating']
+    
+    userImage = 'https://gramener.com/comicgen/v1/comic?name=dee&angle=side&emotion=happy&pose=explaining&box=&boxcolor=%23000000&boxgap=&mirror='
+    assistantImage = 'https://gramener.com/comicgen/v1/comic?name=ava&emotion=angry&pose=angry&shirt=%23b1dbf2&box=&boxcolor=%23000000&boxgap=&mirror='
+
+    img_role = userImage if msg['role'] == "user" else assistantImage
+    chat_class = f"chat-message {'user' if msg['role'] == 'user' else 'assistant'}"
+    
+
+    stream_args = {"hx_trigger":"every 0.1s", "hx_swap":"outerHTML", "hx_get":f"/chat_message/{msg_idx}"}
+    return Div(
+               Img(src=img_role),
+               Div(
+                    P(text)
+                  , cls="bubble")
+               , cls=f"{chat_class}", id=f"chat-message-{msg_idx}", 
+               **stream_args if generating else {})
+
+# Route that gets polled while streaming
+@app.get("/chat_message/{msg_idx}")
+def get_chat_message(msg_idx:int):
+    if msg_idx >= len(messages): return ""
+    return ChatMessage(msg_idx)
+   
+# The input field for the user message. Also used to clear the 
+# input field after sending a message via an OOB swap
+def ChatInput():
+    return Input(_required=1,type="text", name='msg', id='msg-input', 
+                 placeholder="Type a message", 
+                 cls="form-control", hx_swap_oob='true',
+                 aria_label="Type your message here", aria_describedby="sendButton")
 
 @app.route("/")
 def get():
-  page =      (Div(
+  page =    (Div(
                 Nav(
                     Div(
                         A("Groqlet Expendables", cls="navbar-brand", href="#"),
@@ -150,29 +203,32 @@ def get():
                                 A("Documents", cls="nav-link", data_bs_toggle="tab", href="#documentsTab")
                             , cls="nav-item"),
                             Li(
-                                A("Plans", cls="nav-link",  data_bs_toggle="tab", href="#plansTab")
+                                A("Tools", cls="nav-link",  data_bs_toggle="tab", href="#plansTab")
                             , cls="nav-item"),
                             Li(
                                 A("Personas", cls="nav-link", data_bs_toggle="tab", href="#personasTab")
                             , cls="nav-item")
                         , cls="nav nav-tabs"),
                         Div(
-                            Div(
+                            Div( #chat tab
                                 Div(
                                     Div(
-                                        Strong("Copilot"),
-                                        P("Hello, thank you for democratizing AI's productivity benefits with open source! How can I help you today?")
-                                        , cls="chat-message"),
-                                    Div(
-                                        Strong("MB"),
-                                        P("Can you tell me a story about a prince in a paragraph?")
-                                       , cls="chat-message"),
-                                    Div(
-                                        Input(type="text", cls="form-control me-2", placeholder="Type a message...", id="messageInput"),
-                                        Button("Send", cls="btn btn-primary", id="sendBtn")
-                                        , id="chat-input", cls="d-flex")
-                                    , id="chat-messages")
-                                , cls="tab-pane fade show active", id="chatTab"),
+                                        Div(
+                                            Div(
+                                                Div(*[ChatMessage(msgidx) for msgidx, msg in enumerate(messages)],cls="chat-container", id="chatview"),
+                                                Div(
+                                                    id="chatMessages", cls="chat-box h-[73vh] overflow-y-auto"),
+                                                    Form(
+                                                        Group(ChatInput(), Button("Send", cls="btn btn-primary", id="sendBtn", aria_label="Send", aria_describedby="msg-input")
+                                                        , cls="input-group"),
+                                                        hx_post="/", hx_target="#chatview", hx_swap="beforeend",
+                                                        
+                                                    )
+                                                )
+                                        ,cls='row w-100')
+                                        ,cls='container-fluid chat-wrapper'),
+                                    )
+                                    , cls="tab-pane fade show active", id="chatTab"),
                             Div(
                                 Div(
                                     H4("Documents"),
@@ -254,233 +310,40 @@ def get():
                     , cls="col-12 col-md-9 d-flex flex-column", id="chat")
                 , cls="row")
             ,cls="container-fluid"),
-
-              Script(src="https://code.jquery.com/jquery-3.6.0.min.js"),
-              Script(src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js", integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p",crossorigin="anonymous"),
-              Script(f"let agents = {data};"),
-              Script(""" 
-                    let selectedAgentIndex = -1;
-
-                    function populateTabs() {
-                    if (selectedAgentIndex >= 0) {
-                        const selectedAgent = agents[selectedAgentIndex];
-
-                        // Populate Personas tab
-                        const agentNameInput = document.getElementById('agentNameInput');
-                        const metaPromptInput = document.getElementById('metaPromptInput');
-                        const prefillInput = document.getElementById('prefillInput');
-
-                        agentNameInput.value = agents[selectedAgentIndex].Persona.agentname;
-                        metaPromptInput.value = agents[selectedAgentIndex].Persona.metaprompt;
-                        prefillInput.value = agents[selectedAgentIndex].Persona.prefill;
-
-                        // Populate Plans tab
-                        // Clear and repopulate the plans table or list with selectedAgent.Plans
-                        const planTable = document.getElementById('planTable');
-                        planTable.innerHTML = '';
-                        agents[selectedAgentIndex].Plans.forEach(plan => {
-                            const newRow = `<tr>
-                                <td>${plan.name}</td>
-                                <td>${plan.createon}</td>
-                                <td>${plan.tokencount}</td>
-                            </tr>`;
-                            planTable.insertAdjacentHTML('beforeend', newRow);
-                        });
-                        // Populate Documents tab
-                        // Clear and repopulate the documents table with selectedAgent.Documents
-                        const fileTable = document.getElementById('fileTable');
-                        fileTable.innerHTML = '';
-                        agents[selectedAgentIndex].Documents.forEach(doc => {
-                            const newRow = `<tr>
-                                <td><i class="bi bi-file-earmark-text file-icon"></i> ${doc.file}</td>
-                                <td>${doc.createon}</td>
-                                <td>${doc.size}</td>
-                                <td>${doc.Access}</td>
-                                <td><div class="progress"><div class="progress-bar"></div></div></td>
-                            </tr>`;
-                            fileTable.insertAdjacentHTML('beforeend', newRow);
-                        });
-                        // Display initial messages
-                        //displayMessages();
-                    }
-                    }
-
-                    function renderChatList() {
-                    const chatList = document.getElementById('chatList');
-                    chatList.innerHTML = ''; // Clear the existing list
-
-                    agents.forEach((agent, index) => {
-                        const newItem = document.createElement('li');
-                        newItem.className = 'list-group-item';
-                        newItem.innerHTML = `<div class="d-flex justify-content-between">
-                                                <span>${agent.Persona.agentname}</span>
-                                                <small>${new Date().toLocaleTimeString()}</small>
-                                            </div>`;
-                        newItem.setAttribute('data-index', index);
-                        newItem.setAttribute('data-messages', JSON.stringify(agent.Chat));
-                        newItem.addEventListener('click', function() {
-                            selectedAgentIndex = parseInt(this.getAttribute('data-index'));
-                            displayMessages();
-                            populateTabs();
-                        });
-                        newItem.addEventListener('contextmenu', function(e) {
-                            e.preventDefault();
-                            showContextMenu(e, newItem, index);
-                        });
-                        chatList.appendChild(newItem);
-                    });
-                    }
-                    // Event listener for add chat button - Sidebar
-                    document.getElementById('addChatBtn').addEventListener('click', function() {
-                    var chatList = document.getElementById('chatList');
-                    var newItem = document.createElement('li');
-                    newItem.className = 'list-group-item';
-                    newItem.innerHTML = `<div class="d-flex justify-content-between">
-                                        <span>New Agent</span>
-                                        <small>${new Date().toLocaleTimeString()}</small>
-                                    </div>`;
-                    newItem.setAttribute('data-messages', JSON.stringify([]));
-                    chatList.appendChild(newItem);
-
-                    // Add new agent to agents array
-                    var newAgent = {
-                    "Persona": {
-                        "agentname": `agent-${Date.now()}`,
-                        "metaprompt": "you are a helpful assistant",
-                        "prefill": "helps me with financial Reconciliation",
-                        "tooluse": "true",
-                        "filesearch": "false",
-                        "codeinterpreter": "false"
-                    },
-                    "Plans": [],
-                    "Documents": [],
-                    "Chat": []
-                    };
-                    agents.push(newAgent);
-                    renderChatList();
-                    });
-
-                    // Show context menu
-                    function showContextMenu(event, listItem) {
-                    var contextMenu = document.getElementById('contextMenu');
-                    contextMenu.style.display = 'block';
-                    contextMenu.style.left = event.pageX + 'px';
-                    contextMenu.style.top = event.pageY + 'px';
-
-                    document.getElementById('renameItem').onclick = function() {
-                        var newName = prompt("Enter new name:", listItem.querySelector('span').textContent);
-                        if (newName) {
-                            listItem.querySelector('span').textContent = newName;
-                            //write a code to update the agent name in agents array
-                            agents[selectedAgentIndex].Persona.agentname = newName;
-                        }
-                        contextMenu.style.display = 'none';
-                    };
-
-                    document.addEventListener('click', function() {
-                        contextMenu.style.display = 'none';
-                    }, { once: true });
-                    }
-
-                    // Event listener for existing items
-                    document.querySelectorAll('#chatList .list-group-item').forEach(item => {
-                    item.addEventListener('contextmenu', function(e) {
-                        e.preventDefault();
-                        showContextMenu(e, item);
-                    });
-                    });
-                    // Function to display messages
-                    function displayMessages() {
-                    const chatMessages = document.getElementById('chat-messages');
-                    chatMessages.innerHTML = '';
-                    agents[selectedAgentIndex].Chat.forEach(msg => {
-                        const messageElement = document.createElement('div');
-                        messageElement.classList.add('chat-message');
-                        messageElement.innerHTML = `<strong>${msg.role}</strong><p>${msg.content}</p>`;
-                        chatMessages.appendChild(messageElement);
-                    });
-                    }
-
-                    // Event listener for sidebar items
-                    document.querySelectorAll('#chatList .list-group-item').forEach(item => {
-                    item.addEventListener('click', function() {
-                        const newMessages = JSON.parse(this.getAttribute('data-messages'));
-                        messages = [...newMessages];
-                        displayMessages();
-                    });
-                    });
-
-                    // Event listener for send button
-                    document.getElementById('sendBtn').addEventListener('click', function() {
-                    const input = document.getElementById('messageInput');
-                    const userMessage = input.value;
-                    if (userMessage) {
-                        agents[selectedAgentIndex].Chat.push({ role: 'MB', content: userMessage });
-                        if (userMessage.toLowerCase() === 'what is the capital of india') {
-                            agents[0].Chat.push({ role: 'Copilot', content: 'New Delhi is the capital of India' });
-                        }
-                        displayMessages();
-                        input.value = '';
-                    }
-                    });
-
-                    // Event listener for upload button
-                    document.getElementById('uploadBtn').addEventListener('click', function() {
-                    document.getElementById('fileInput').click();
-                    });
-
-                    // Event listener for file input - Documents Tab
-                    document.getElementById('fileInput').addEventListener('change', function(event) {
-                    const file = event.target.files[0];
-                    if (file) {
-                        const newRow = `<tr>
-                            <td><i class="bi bi-file-earmark-text file-icon"></i> ${file.name}</td>
-                            <td>${new Date().toLocaleTimeString()}</td>
-                            <td>${file.size}</td>
-                            <td>This chat</td>
-                            <td><div class="progress"><div class="progress-bar"></div></div></td>
-                        </tr>`;
-                        document.getElementById('fileTable').insertAdjacentHTML('beforeend', newRow);
-                    }
-                    });
-
-                    // Event listener for save button - Personas Tab
-                    document.getElementById('savePlanBtn').addEventListener('click', function() {
-                    const agentname = document.getElementById('agentNameInput').value;
-                    const metaprompt = document.getElementById('metaPromptInput').value;
-                    const prefill = document.getElementById('prefillInput').value;
-
-                    const plan = {
-                        agentname,
-                        metaprompt,
-                        prefill
-                    };
-
-                    const savedPlansList = document.getElementById('savedPlansList');
-                    const planItem = document.createElement('li');
-                    planItem.classList.add('list-group-item');
-                    planItem.textContent = `Agent Name: ${agentname}`;
-                    planItem.addEventListener('click', function() {
-                        alert(`Meta Prompt: ${plan.metaprompt}\nPrefill: ${plan.prefill}`);
-                    });
-
-                    savedPlansList.appendChild(planItem);
-
-                    // Clear the inputs after saving
-                    document.getElementById('agentNameInput').value = '';
-                    document.getElementById('metaPromptInput').value = '';
-                    document.getElementById('prefillInput').value = '';
-                    });
-
-
-
-                    // Initial rendering of the chat list
-                    renderChatList();
-
-                    // Populate tabs initially (if needed)
-                    populateTabs();
-                        """))
+            Script(src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js", integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p",crossorigin="anonymous"),
+            )
   return page
+
+# Run the chat model in a separate thread
+@threaded
+def get_response(r, idx): #.choices[0].delta.content
+    for chunk in r: 
+        if chunk.choices[0].delta.content is not None:
+            messages[idx]["content"] += chunk.choices[0].delta.content
+    messages[idx]["generating"] = False
+
+# Handle the form submission
+@app.post("/")
+def post(msg:str):
+    idx = len(messages)
+    messages.append({"role":"user", "content":msg})
+    for entry in messages:
+        if 'generating' in entry:
+            del entry['generating']
+    stream  = client.chat.completions.create(
+                                            messages=messages,
+                                            model="llama3-8b-8192",
+                                            temperature=0.5,
+                                            max_tokens=1024,
+                                            top_p=1,
+                                            stop=None,
+                                            stream=True,
+                                                )
+    messages.append({"role":"assistant", "generating":True, "content":""}) # Response initially blank
+    get_response(stream, idx+1) # Start a new thread to fill in content
+    return (ChatMessage(idx), # The user's message
+            ChatMessage(idx+1), # The chatbot's response
+            ChatInput()) # And clear the input field via an OOB swap
 
 serve()
 
